@@ -1,0 +1,18 @@
+{
+  "name": "ShadowDraw — Magic Hands Studio",
+  "short_name": "ShadowDraw",
+  "description": "Draw, colour, trace, play and make music with your hands in the air. Works offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#fff8ec",
+  "theme_color": "#5b3df5",
+  "categories": ["kids", "education", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

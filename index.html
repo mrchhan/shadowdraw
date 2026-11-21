@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ShadowDraw — Magic Hands Studio</title>
+<meta name="description" content="Draw, paint, learn, play and make music with your hands in the air. Works offline.">
+<meta name="theme-color" content="#5b3df5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ShadowDraw">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <!-- Stage layers -->
+  <div id="stage">
+    <canvas id="bg"></canvas>
+    <div id="layers"></div>
+    <canvas id="fx"></canvas>
+  </div>
+
+  <!-- UI -->
+  <div id="ui">
+    <header id="topbar">
+      <button class="hit iconbtn" id="btnHome" title="Home" aria-label="Home"><span>⌂</span></button>
+      <div id="modeTitle">ShadowDraw</div>
+      <div id="modeTools"></div>
+      <div class="spacer"></div>
+      <div id="trackStatus" class="pill" title="Hand tracking status">✋ …</div>
+    </header>
+    <div id="sideTools"></div>
+    <div id="bottomTools"></div>
+    <div id="screens"></div>
+  </div>
+
+  <canvas id="cursors"></canvas>
+  <div id="praise"></div>
+  <div id="toast"></div>
+  <div id="modal" hidden></div>
+
+  <video id="video" playsinline muted autoplay></video>
+
+  <script src="vendor/mediapipe-hands/hands.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="js/modes/draw.js"></script>
+  <script src="js/modes/color.js"></script>
+  <script src="js/modes/trace.js"></script>
+  <script src="js/modes/games.js"></script>
+  <script src="js/modes/music.js"></script>
+  <script src="js/modes/stickers.js"></script>
+  <script src="js/modes/gallery.js"></script>
+  <script src="js/modes/parents.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
