@@ -132,6 +132,7 @@
       setTimeout(() => st.hint && st.hint.remove(), 9000); },
     exit() { L.hide(); for (const k of [...st.active.keys()]) finish(k); },
     palmErase: () => st.palmErase,
+    twoHands: () => st.twoP,
     cursorColor: (h) => { const p = playerFor(h); return p.brush === 'eraser' ? '#ffffff' : p.brush === 'rainbow' ? 'rainbow' : p.color; },
     update(dt, hands) {
       const t = SD.now();

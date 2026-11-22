@@ -76,6 +76,7 @@
     enter(arg) { arg && arg.sub ? open(arg.sub) : picker(); },
     exit() { stopTher(); },
     cursorColor: () => '#ffc93c',
+    twoHands: () => true,
     update(dt, hands) {
       const t = SD.now();
       if (st.sub === 'guitar') {

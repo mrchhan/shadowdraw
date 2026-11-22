@@ -52,6 +52,7 @@
     enter(arg) { arg && arg.game ? start(arg.game) : picker(); },
     exit() { st.running = false; st.objs = []; },
     cursorColor: () => '#ff5d73',
+    twoHands: () => !!st.running,
     update(dt, hands) {
       if (!st.running) return;
       st.time -= dt; st.hud.querySelector('[data-tm]').textContent = '⏱️ ' + Math.max(0, Math.ceil(st.time));

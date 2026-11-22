@@ -40,7 +40,7 @@
     setStatus('ready', '✋ Show your hand!');
     return true;
   };
-  T.applyOptions = () => { if (T.mp) T.mp.setOptions({ maxNumHands: SD.S.maxHands, modelComplexity: SD.S.modelComplexity, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5, selfieMode: false }); };
+  T.applyOptions = () => { if (T.mp) { appliedHands = T.wantHands(); T.mp.setOptions({ maxNumHands: appliedHands, modelComplexity: SD.S.modelComplexity, minDetectionConfidence: 0.75, minTrackingConfidence: 0.6, selfieMode: false }); } };
   T.stop = () => { if (T.stream) { T.stream.getTracks().forEach(t => t.stop()); T.stream = null; } T.camHands.clear(); };
   T.cameraOn = () => !!(T.stream && T.mp);
 
@@ -83,39 +83,59 @@
   }
 
   let nextId = 1;
+  // How many hands the current screen needs: one-hand screens ignore extra detections (no ghost cursors)
+  T.wantHands = () => Math.min(SD.S.maxHands, SD.current && SD.current.twoHands && SD.current.twoHands() ? 2 : 1);
+  let appliedHands = 0;
   function onResults(res) {
     const t = SD.now();
     frames++; if (t - fpsT > 1000) { T.fps = frames; frames = 0; fpsT = t; }
     T.lastResultAt = t;
     const r = T.videoRect();
-    const list = (res.multiHandLandmarks || []).map((lmN, i) => {
-      const lm = lmN.map(p => toScreen(p.x, p.y, r));
-      return { lmN, lm, g: analyse(lmN), label: (res.multiHandedness && res.multiHandedness[i] && res.multiHandedness[i].label) || '' };
+    let list = (res.multiHandLandmarks || []).map((lmN, i) => {
+      const hd = res.multiHandedness && res.multiHandedness[i];
+      const c = lmN[9]; // middle-finger knuckle = stable palm centre
+      return { lmN, lm: lmN.map(p => toScreen(p.x, p.y, r)), g: analyse(lmN), label: (hd && hd.label) || '', score: hd && hd.score != null ? hd.score : 1, cx: c.x, cy: c.y };
     });
-    // match to existing tracked hands by nearest wrist
+    // 1) drop weak detections (ghost hands are usually low-confidence)
+    list = list.filter(h => h.score >= 0.75);
+    // 2) drop duplicates of the same hand (two detections close together) — keep the more confident one
+    list.sort((a, b) => b.score - a.score);
+    list = list.filter((h, i) => !list.slice(0, i).some(o => Math.hypot(o.cx - h.cx, o.cy - h.cy) < 0.09));
+    // 3) only as many hands as this screen needs
+    list = list.slice(0, T.wantHands());
+    // match to existing tracked hands by nearest palm centre
     const used = new Set();
     for (const h of list) {
       let best = null, bd = 1e9;
-      for (const [k, th] of T.camHands) { if (used.has(k)) continue; const dd = d(th.raw.lm[0], h.lm[0]); if (dd < bd) { bd = dd; best = k; } }
-      let th = best && bd < Math.max(SD.W, SD.H) * 0.35 ? T.camHands.get(best) : null;
+      for (const [k, th] of T.camHands) { if (used.has(k)) continue; const dd = Math.hypot(th.raw.cx - h.cx, th.raw.cy - h.cy); if (dd < bd) { bd = dd; best = k; } }
+      let th = best && bd < 0.25 ? T.camHands.get(best) : null;
       if (!th) { th = makeCamHand(); T.camHands.set(th.key, th); }
       used.add(th.key); updateCamHand(th, h, t);
     }
-    for (const [k, th] of T.camHands) if (!used.has(k) && t - th.seen > 280) T.camHands.delete(k);
+    for (const [k, th] of T.camHands) if (!used.has(k) && t - th.seen > 160) T.camHands.delete(k);
   }
 
   function makeCamHand() {
-    const sm = SD.S.smoothing, mc = SD.lerp(3.0, 0.6, sm), beta = SD.lerp(0.05, 0.006, sm);
-    return { key: 'c' + (nextId++), src: 'cam', f: { tx: new SD.OneEuro(mc, beta), ty: new SD.OneEuro(mc, beta), px: new SD.OneEuro(mc, beta), py: new SD.OneEuro(mc, beta) },
-      pinch: false, penState: false, penFrames: 0, openFrames: 0, seen: 0, raw: null };
+    const sm = SD.S.smoothing, mc = SD.lerp(1.2, 0.25, sm), beta = SD.lerp(0.015, 0.0015, sm), E = () => new SD.OneEuro(mc, beta);
+    return { key: 'c' + (nextId++), src: 'cam', f: { tx: E(), ty: E(), px: E(), py: E(), cx: E(), cy: E() },
+      pinch: false, penState: false, penFrames: 0, openFrames: 0, seen: 0, raw: null, frames: 0, cur: null, disp: null, lockUntil: 0 };
   }
   function updateCamHand(th, h, t) {
-    th.raw = h; th.seen = t;
+    th.raw = h; th.seen = t; th.frames++;
+    const sm = SD.S.smoothing;
     const tip = h.lm[8], mid = { x: (h.lm[4].x + h.lm[8].x) / 2, y: (h.lm[4].y + h.lm[8].y) / 2 };
     th.tip = { x: th.f.tx.filter(tip.x, t), y: th.f.ty.filter(tip.y, t) };
     th.pin = { x: th.f.px.filter(mid.x, t), y: th.f.py.filter(mid.y, t) };
-    const s = SD.S.pinchSens, on = 0.30 * s, off = 0.45 * s;
+    const s = SD.S.pinchSens, on = 0.30 * s, off = 0.45 * s, was = th.pinch;
     if (!th.pinch && h.g.pinchR < on) th.pinch = true; else if (th.pinch && h.g.pinchR > off) th.pinch = false;
+    // Cursor = pointer-finger tip, filtered + dead-zone. When a pinch starts or ends the finger jumps
+    // a little, so the cursor is held still for a moment ("click lock").
+    const c = { x: th.f.cx.filter(tip.x, t), y: th.f.cy.filter(tip.y, t) };
+    if (was !== th.pinch) th.lockUntil = t + 170;
+    const dz = SD.lerp(0.6, 3.5, sm);
+    if (!th.cur) th.cur = c;
+    else if (t < th.lockUntil) { /* hold */ }
+    else if (Math.hypot(c.x - th.cur.x, c.y - th.cur.y) > dz) th.cur = c;
     // pen = drawing gesture
     if (SD.S.drawGesture === 'point') {
       const want = (h.g.point && !th.pinch) || th.pinch;
@@ -144,11 +164,15 @@
 
   // ---------- Per-frame snapshot with edges ----------
   const prev = new Map();
+  let lastTick = SD.now();
   T.tick = () => {
-    const out = [], t = SD.now();
+    const out = [], t = SD.now(), dt = Math.min(0.1, (t - lastTick) / 1000); lastTick = t;
+    if (T.mp && T.wantHands() !== appliedHands) T.applyOptions();
+    const ease = 1 - Math.exp(-dt * 30);
     for (const th of T.camHands.values()) {
-      if (!th.tip) continue;
-      const pt = th.pinch ? th.pin : th.tip; // finger tip when pointing, pinch point when pinching
+      if (!th.cur || th.frames < 3) continue; // a hand must be seen a few frames in a row before it gets a cursor
+      th.disp = th.disp ? { x: SD.lerp(th.disp.x, th.cur.x, ease), y: SD.lerp(th.disp.y, th.cur.y, ease) } : { ...th.cur };
+      const pt = th.disp;
       out.push({ key: th.key, src: 'cam', x: pt.x, y: pt.y, pt: { x: pt.x, y: pt.y }, tip: { ...th.tip }, pin: { ...th.pin }, palm: th.palm, size: th.size,
         pen: th.penState, pinch: th.pinch, open: th.openFrames >= 3, fist: th.fistFrames >= 3, fingers: th.raw.g.fingers, g: th.raw.g, lm: th.raw.lm, label: th.raw.label });
     }

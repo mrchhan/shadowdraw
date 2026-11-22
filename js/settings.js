@@ -8,7 +8,7 @@
     board: 'paper',          // paper | night | camera
     drawGesture: 'pinch',    // pinch | point
     pinchSens: 1.0,          // 0.6 (strict) .. 1.6 (easy)
-    smoothing: 0.5,          // 0 (fast) .. 1 (very smooth)
+    smoothing: 0.65,          // 0 (fast) .. 1 (very smooth)
     reach: 1.15,             // 1 = exact, >1 = small moves cover more screen
     dwellMs: 1000,           // hover-to-click time
     showSkeleton: false,

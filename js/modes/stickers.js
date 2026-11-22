@@ -51,6 +51,7 @@
     exit() { BG.hide(); S.hide(); st.grabs.clear(); st.duo = null; },
     onResize() { drawBg(); },
     cursorColor: () => '#22c39a',
+    twoHands: () => true,
     update(dt, hands) {
       const live = hands.filter(h => !h.gone);
       st.hover = null; for (const h of live) if (!h.overUI) { const it = hitItem(h); if (it) st.hover = it; }
