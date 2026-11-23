@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2 — 23 Nov 2026
+- New Shadow-themed app icon (dark background, blue and red glow) for the website, phone home screen and Windows app
+- Dark theme colour for the browser bar and installed app
+
 ## v1.0.1 — 22 Nov 2026
 - Steadier cursor: small hand shakes are ignored and the cursor glides between camera frames
 - Clicks land where you aim: the cursor holds still for a moment as a pinch starts or ends

@@ -1,5 +1,5 @@
 /* ShadowDraw offline service worker — caches the whole app (including the hand-tracking model) on first visit */
-const VERSION = 'shadowdraw-v1.0.1';
+const VERSION = 'shadowdraw-v1.0.2';
 const FILES = [
   "./",
   "css/app.css",

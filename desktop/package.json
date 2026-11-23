@@ -1,7 +1,7 @@
 {
   "name": "shadowdraw-desktop",
   "productName": "ShadowDraw",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "ShadowDraw — Magic Hands Studio. Desktop (Windows/macOS/Linux) build of the web app. Works fully offline.",
   "author": "Shadow Creative Studio",
   "license": "UNLICENSED",
